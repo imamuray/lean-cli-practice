@@ -1,4 +1,6 @@
 import CliUtils
 
-def main : IO Unit :=
-  IO.println s!"Hello, {hello}!"
+def main (args : List String): IO UInt32 :=
+  match args with
+  | [] => process 0 ["-"]
+  | _ => process 0 args
