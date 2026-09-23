@@ -1,0 +1,13 @@
+{
+  "name": "lean cli practice",
+  "remoteUser": "vscode",
+
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["leanprover.lean4"]
+    }
+  }
+}

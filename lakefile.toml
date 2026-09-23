@@ -1,0 +1,10 @@
+name = "cli-utils"
+version = "0.1.0"
+defaultTargets = ["cli-utils"]
+
+[[lean_lib]]
+name = "CliUtils"
+
+[[lean_exe]]
+name = "cli-utils"
+root = "Main"
