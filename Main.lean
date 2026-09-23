@@ -1,6 +1,12 @@
 import CliUtils
 
-def main (args : List String): IO UInt32 :=
+def main (args : List String): IO UInt32 := do
   match args with
-  | [] => process 0 ["-"]
-  | _ => process 0 args
+  | "cat" :: args => cat args
+  | command :: _ =>
+    IO.eprintln s!"\"{command}\" is not defined."
+    pure 1
+  | [] =>
+    let appPath ← IO.appPath
+    IO.eprintln s!"usage: {appPath} [command]"
+    pure 1
