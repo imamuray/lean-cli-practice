@@ -3,3 +3,4 @@
 import CliUtils.Basic
 import CliUtils.Cat
 import CliUtils.Head
+import CliUtils.Wc
