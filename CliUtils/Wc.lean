@@ -11,6 +11,70 @@ instance : Add Counter where
 instance : ToString Counter where
   toString c := s!"{c.lines} {c.words} {c.bytes}"
 
+namespace Counter
+
+def incLines (self : Counter) : Counter :=
+  {self with lines := self.lines + 1, bytes := self.bytes + 1}
+
+def incWords (self : Counter) : Counter :=
+  {self with words := self.words + 1, bytes := self.bytes + 1}
+
+def incBytes (self : Counter) : Counter :=
+  {self with bytes := self.bytes + 1}
+
+def incAll (self : Counter) : Counter :=
+  ⟨self.lines + 1, self.words + 1, self.bytes + 1⟩
+
+end Counter
+
+private def bufsize : USize := 20 * 1024
+
+def isWhitespace (byte : UInt8) : Bool :=
+  byte == ' '.toUInt8 || byte == '\t'.toUInt8 || byte == '\r'.toUInt8
+
+def isNewLine (byte : UInt8) : Bool :=
+  byte == '\n'.toUInt8
+
+def incCounter
+  (state : Counter × Bool)
+  (byte : UInt8)
+  : Counter × Bool :=
+  let counter := state.fst
+  let isInWord := state.snd
+  if isInWord then
+    if isWhitespace byte then
+      (counter.incWords, false)
+    else if isNewLine byte then
+      (counter.incAll, false)
+    else
+      (counter.incBytes, true)
+  else
+    if isWhitespace byte then
+      (counter.incBytes, false)
+    else if isNewLine byte then
+      (counter.incLines, false)
+    else
+      (counter.incBytes, true)
+
+
+def state : Counter × Bool := (⟨0, 0, 0⟩, true)
+
+partial def countBytes
+  (stream : IO.FS.Stream)
+  (state : Counter × Bool := (⟨0, 0, 0⟩, false))
+  : IO Counter := do
+  let buf ← stream.read bufsize
+  if buf.isEmpty then
+    let counter := state.fst
+    let isInWord := state.snd
+    if isInWord then
+      pure {counter with words := counter.words + 1}
+    else
+      pure counter
+  else
+    let nextState := buf.foldl incCounter state
+    countBytes stream nextState
+
 private def countFromLine (line : String) : Counter :=
   if line.isEmpty then
     ⟨0, 0, 0⟩
@@ -50,8 +114,10 @@ private def process (exitCode : UInt32) (args : List String) : IO UInt32 := do
     | none =>
       process 1 args
     | some stream =>
-      let result ← count stream
-      IO.println s!"{result} {filename}"
+      let start ← IO.monoNanosNow
+      let result ← countBytes stream
+      let finish ← IO.monoNanosNow
+      IO.println s!"{result} {filename}, elapsed: {finish - start} ns"
       process exitCode args
 
 def wc (args : List String) : IO UInt32 :=
